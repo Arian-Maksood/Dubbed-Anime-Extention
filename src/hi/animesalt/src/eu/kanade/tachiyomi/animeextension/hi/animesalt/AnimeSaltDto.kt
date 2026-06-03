@@ -6,27 +6,42 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 @Serializable
-data class ServerResponseDto(val result: ServerResultDto)
+data class ServerResponseDto(
+    val result: ServerResultDto,
+)
 
 @Serializable
-data class ServerResultDto(val url: String)
+data class ServerResultDto(
+    val url: String,
+)
 
 @Serializable
 data class SourceResponseDto(
     val sources: JsonElement,
-    val tracks: List<TrackDto>? = null,
+    val tracks: List<TrackDto> = emptyList(),
     val intro: IntroOutroDto? = null,
     val outro: IntroOutroDto? = null,
     val server: Int? = null,
 )
 
 @Serializable
-data class TrackDto(val file: String, val kind: String, val label: String = "")
+data class TrackDto(
+    val file: String,
+    val kind: String,
+    val label: String = "",
+)
 
 @Serializable
-data class IntroOutroDto(val start: Int, val end: Int)
+data class IntroOutroDto(
+    val start: Int,
+    val end: Int,
+)
 
 @Serializable
-data class ResultResponse(val result: String) {
-    fun toDocument(): Document = Jsoup.parseBodyFragment(result)
+data class ResultResponse(
+    val result: String,
+) {
+    fun toDocument(): Document {
+        return Jsoup.parseBodyFragment(result)
+    }
 }

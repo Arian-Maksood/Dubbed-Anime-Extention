@@ -1,7 +1,10 @@
-package eu.kanade.tachiyomi.animeextension.hi.animesalt
+package eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors
 
 import android.app.Application
 import android.util.Log
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.AnimeSalt.Companion.UA_MOBILE
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.CloudFlareBypassResult
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.CloudflareBypass
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
@@ -18,7 +21,7 @@ class KwikExtractor(
     private val appContext: Application,
 ) {
     companion object {
-        private const val TAG = "AnimeSalt-Kwik"
+        private const val TAG = "KwikExtractor"
         private val M3U8_REGEX = Regex("""(https?://[^\s\\'"]+\.m3u8[^\s\\'"]*?)""")
         private val KWIK_PARAMS_REGEX = Regex("""\("(\w+)",\d+,"(\w+)",(\d+),(\d+),\d+\)""")
         private val KWIK_FORM_URL = Regex("""action="([^"]+)"""")
@@ -38,6 +41,7 @@ class KwikExtractor(
         headers.newBuilder()
             .set("Origin", "https://kwik.cx")
             .set("Referer", "https://kwik.cx/")
+            .set("User-Agent", UA_MOBILE)
             .build()
     }
 
@@ -47,7 +51,9 @@ class KwikExtractor(
     private var cachedBypass: CloudFlareBypassResult? = null
     private var bypassTimestamp = 0L
     private val bypassLock = Any()
-    private val bypassCacheTtl = 5 * 60 * 1000L
+    private companion object {
+        const val BYPASS_CACHE_TTL = 5 * 60 * 1000L
+    }
 
     suspend fun getHlsVideo(kwikUrl: String, referer: String, quality: String = ""): Video {
         val videoUrl = getHlsStreamUrl(kwikUrl, referer)
@@ -202,7 +208,7 @@ class KwikExtractor(
 
     private fun getOrRefreshBypass(url: String): CloudFlareBypassResult? {
         synchronized(bypassLock) {
-            if (cachedBypass != null && System.currentTimeMillis() - bypassTimestamp < bypassCacheTtl) {
+            if (cachedBypass != null && System.currentTimeMillis() - bypassTimestamp < BYPASS_CACHE_TTL) {
                 return cachedBypass
             }
         }

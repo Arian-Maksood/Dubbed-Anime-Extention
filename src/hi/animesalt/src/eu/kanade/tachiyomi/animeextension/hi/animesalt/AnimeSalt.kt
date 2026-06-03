@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.AnimeSalt
+package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
 import android.app.Application
 import android.util.Log
@@ -7,6 +7,10 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import aniyomi.lib.playlistutils.PlaylistUtils
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AbyssExtractor
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AwsStreamExtractor
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.KwikExtractor
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.MegaPlayExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -17,6 +21,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
+import eu.kanade.tachiyomi.network.headersOf
 import eu.kanade.tachiyomi.util.asJsoup
 import keiyoushi.utils.getPreferencesLazy
 import keiyoushi.utils.parallelFlatMapBlocking
@@ -39,18 +44,22 @@ import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class AnimeSalt :
-    ParsedAnimeHttpSource(),
-    ConfigurableAnimeSource {
+class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "AnimeSalt"
-
-    override val baseUrl: String
-        get() = preferences.getString(PREF_CUSTOM_DOMAIN_KEY, null)?.takeIf { it.isNotBlank() }
-            ?: preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
-
+    override val baseUrl = "https://animesalt.ac"
     override val lang = "hi"
     override val supportsLatest = true
+
+    override val client = network.cloudflareClient
+
+    // Headers for Cloudflare + Player protection
+    override val headers = headersOf(
+        "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Referer", baseUrl,
+        "Origin", baseUrl
+    )
+
 
     private val utils by lazy { AnimeSaltUtils() }
     private val preferences by getPreferencesLazy()
@@ -778,7 +787,7 @@ class AnimeSalt :
     }
 
     companion object {
-        private val DOMAINS = arrayOf("animewave.to", "AnimeSalt.id", "AnimeSalt.best", "AnimeSalt.ro") // Domains from https://megaplay.buzz/domains (Base64)
+        private val DOMAINS = arrayOf("animesalt.ac", "animewave.to", "AnimeSalt.id", "AnimeSalt.best", "AnimeSalt.ro") // Domains from https://megaplay.buzz/domains (Base64)
         private val BASE_URLS = DOMAINS.map { "https://$it" }.toTypedArray()
 
         private val SOFTSUB_REGEX = Regex("""\bsoftsub\b""", RegexOption.IGNORE_CASE)
